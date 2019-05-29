@@ -6,6 +6,8 @@ public class Main {
 		// TODO Auto-generated method stub
 		System.out.println("Go Back N");
 		Sender sender = new Sender();
+		
+		System.out.println("Frame : 0");
 	}
 
 }

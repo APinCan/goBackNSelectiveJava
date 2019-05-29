@@ -25,17 +25,31 @@ public class Sender{
 		
 		//보낼 데이터를 버퍼에 담고 전송
 		addBufferWindow();
+		System.out.print("Sender | seq : "+currentWindow.get(0)+" send --> ");
 		//데이터를 5초간 전송
 		send.start();
 		//전송이 끝나면 receiver는 잘 받았다는 신호 전솓
 		Receiver receiver = new Receiver();
 		String reuslt=receiver.receive(frame);
-		checkACKNAK(reuslt);
+		String receive=checkACKNAK(frame, reuslt);
+		
+		System.out.println(receive);
 	}
 	
-	public void checkACKNAK(String result) {
+	public String checkACKNAK(Frame frame, String result) {
+		String reuslt;
+		int seq=frame.frameNumber;
+		
+		//ACK라면
 		if(result.contains("ACK")) {
-			
+			//다음 프레임을 넘겨라 라고 전달
+			result="ACK "+(seq+1);
+			return result;
+		}
+		//NAK라면 그전꺼 재전달
+		else {
+			reuslt="NAK "+seq+" resend";
+			return result;
 		}
 	}
 	
