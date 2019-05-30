@@ -44,6 +44,7 @@ public class Sender{
 		if(result.contains("ACK")) {
 			//다음 프레임을 넘겨라 라고 전달
 			result="ACK "+(seq+1);
+			bufferWindow.remove(0);
 			return result;
 		}
 		//NAK라면 그전꺼 재전달
