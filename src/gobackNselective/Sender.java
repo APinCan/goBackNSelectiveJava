@@ -5,83 +5,88 @@ import java.util.Vector;
 public class Sender{
 	int windowSize=5;
 	int frameMaxSize=7;
-	int sendingdata=0;
-	int firstIndex=0;
-	int lastIndex=4;
 	Vector<Integer> currentWindow = new Vector<>();
 	Vector<Integer> bufferWindow = new Vector<>();
+	Receiver receiver;
+	int resendIndex=0;
 	
 	public Sender(){
 		for(int i=0;i<windowSize;i++) {
 			currentWindow.add(i);
 		}
-	}
-	
-	public void send() {
-		SendThread send = new SendThread();
-		Frame frame = new Frame();
-		//프레임에 집어넣을 데이터와 순서번호 설정
-		setDataFrame(frame);
 		
-		//보낼 데이터를 버퍼에 담고 전송
-		addBufferWindow();
-		System.out.print("Sender | seq : "+currentWindow.get(0)+" send --> ");
-		//데이터를 5초간 전송
-		send.start();
-		//전송이 끝나면 receiver는 잘 받았다는 신호 전솓
-		Receiver receiver = new Receiver();
-		String reuslt=receiver.receive(frame);
-		String receive=checkACKNAK(frame, reuslt);
+	}
+	
+	public void run() {
+			/*
+			 * 데이터 넣기
+			 */
+			Frame frame = new Frame();
+			setData(frame, "data");
+			
+			System.out.println("send Frame : "+frame.frameSequence);
+			
+			receiver.receive(frame);
+			/*
+			 * 버퍼에 맨앞 seq저장
+			 */
+			bufferWindow.add(currentWindow.firstElement().intValue());
+			/*
+			 * 프레임 윈도우 크기 조절
+			 */
+			//데이터를 보냈으니 맨앞의 윈도우는 줄이고
+			currentWindow.remove(0);
+//			//맨 마지막에 프레임amx보다 크지않은 seq를 넣기
+//			if(currentWindow.lastElement().intValue()==frameMaxSize) {
+//				currentWindow.add(0);
+//			}
+//			else {
+//				currentWindow.add(currentWindow.lastElement().intValue()+1);
+//			}
+//	}
+	}
+	
+	public void receive(Frame frame) {
+		String message = frame.message;
 		
-		System.out.println(receive);
-	}
-	
-	public String checkACKNAK(Frame frame, String result) {
-		String reuslt;
-		int seq=frame.frameNumber;
-		
-		//ACK라면
-		if(result.contains("ACK")) {
-			//다음 프레임을 넘겨라 라고 전달
-			result="ACK "+(seq+1);
-			bufferWindow.remove(0);
-			return result;
-		}
-		//NAK라면 그전꺼 재전달
-		else {
-			reuslt="NAK "+seq+" resend";
-			return result;
-		}
-	}
-	
-	public void addBufferWindow() {
-		//맨처음의 순서번호를 삭제하고 버퍼에 추가
-		int addBufferWindow = currentWindow.firstElement().intValue();
-		currentWindow.remove(0);
-		bufferWindow.add(addBufferWindow);
-	}
-	
-	public void setDataFrame(Frame frame) {
-		//보낼 데이터를 만들어냄
-		//여기서는 1,2,3,4.....10,11,12 등의 데이터를 보냄
-		frame.data = ""+sendingdata;
-		sendingdata++;
-		//프레임의 순서번호를 지정, 현재 윈도우의 맨 앞에 있는 순서번호
-		frame.frameNumber=currentWindow.get(currentWindow.get(0));
-	}
-	
-	class SendThread extends Thread{
-		@Override
-		public void run() {
-			for(int i=0;i<5;i++) {
-				System.out.println("Sending...");
-				try {
-					Thread.sleep(1000);
-				} catch(Exception e) {
-					
+		//sender는 ack를 받아야 윈도우를 늘림
+		if(message.equals("ACK")) {			
+			for(int i=0; i<bufferWindow.size();i++) {
+				//맨 마지막에 프레임amx보다 크지않은 seq를 넣기
+				if(currentWindow.lastElement().intValue()==frameMaxSize) {
+					currentWindow.add(0);
 				}
-
+				else { 
+					currentWindow.add(currentWindow.lastElement().intValue()+1);
+				}
+			
 			}
+			bufferWindow.clear();
+		}	
+		//NAK를 받는경우
+		else {
+			resendIndex=frame.frameSequence;
+			
+			//frame.frameSequence에서부터 다시 시작해야됨
+			int index=bufferWindow.indexOf(resendIndex);
+			
+			for(int i =index ;  i<bufferWindow.size();i++) {
+				currentWindow.add(i, bufferWindow.elementAt(i));
+			}
+			
+//			for(int i=bufferWindow.indexOf(resendIndex);i<bufferWindow.size();i++) {
+//				currentWindow.add(i, bufferWindow.firstElement());
+//			}
+			
+			bufferWindow.clear();
 		}
+	}
+
+	public void setData(Frame frame, String data) {
+		//data를 넣고
+		frame.data=data;
+			//현재 윈도우의 맨앞의 값을 sequence넘버에 넣기
+	 	frame.frameSequence=currentWindow.firstElement().intValue();
+
 	}
 }

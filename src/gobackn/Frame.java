@@ -1,7 +1,6 @@
-package gobackNselective;
+package gobackn;
 
 public class Frame {
 	String data;
 	int frameSequence;
-	String message;
 }

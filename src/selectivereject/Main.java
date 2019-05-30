@@ -1,12 +1,12 @@
-package gobackNselective;
+package selectivereject;
 
 public class Main {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		GoBackN goback = new GoBackN();
+		SelectiveReject selr = new SelectiveReject();
 		
-		goback.start();
+		selr.start();
 	}
 
 }

@@ -1,4 +1,4 @@
-package gobackNselective;
+package selectivereject;
 
 public class Frame {
 	String data;

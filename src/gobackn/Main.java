@@ -1,4 +1,4 @@
-package gobackNselective;
+package gobackn;
 
 public class Main {
 
